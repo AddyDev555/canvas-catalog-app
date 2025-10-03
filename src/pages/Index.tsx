@@ -5,15 +5,19 @@ import { Artwork } from "@/types/artwork";
 import { fetchArtworks } from "@/services/artworkService";
 import { SelectionPanel } from "@/components/SelectionPanel";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import "primereact/resources/themes/lara-light-amber/theme.css";
 import "primeicons/primeicons.css";
 
 const Index = () => {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
+  const [filteredArtworks, setFilteredArtworks] = useState<Artwork[]>([]);
   const [selectedRows, setSelectedRows] = useState<Map<number, Artwork>>(new Map());
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const loadArtworks = async (page: number) => {
@@ -21,6 +25,7 @@ const Index = () => {
     try {
       const response = await fetchArtworks(page);
       setArtworks(response.data);
+      setFilteredArtworks(response.data);
       setTotalRecords(response.pagination.total);
       setCurrentPage(page);
     } catch (error) {
@@ -38,43 +43,52 @@ const Index = () => {
     loadArtworks(1);
   }, []);
 
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredArtworks(artworks);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = artworks.filter((artwork) => {
+        return (
+          artwork.title?.toLowerCase().includes(query) ||
+          artwork.artist_display?.toLowerCase().includes(query) ||
+          artwork.place_of_origin?.toLowerCase().includes(query) ||
+          artwork.inscriptions?.toLowerCase().includes(query)
+        );
+      });
+      setFilteredArtworks(filtered);
+    }
+  }, [searchQuery, artworks]);
+
   const onPageChange = (event: any) => {
     const newPage = event.page + 1;
     loadArtworks(newPage);
+    setSearchQuery(""); // Reset search when changing pages
   };
 
   const onSelectionChange = (e: any) => {
     const newSelectedRows = new Map(selectedRows);
     
     if (Array.isArray(e.value)) {
-      // Handle "select all" on current page
-      const currentPageIds = new Set(artworks.map(art => art.id));
+      // Get current selection from e.value
+      const currentSelection = new Set(e.value.map((art: Artwork) => art.id));
+      const currentPageIds = filteredArtworks.map(art => art.id);
       
-      if (e.value.length === artworks.length) {
-        // All rows on current page selected - add them
-        e.value.forEach((artwork: Artwork) => {
-          newSelectedRows.set(artwork.id, artwork);
-        });
-      } else {
-        // Deselect all on current page
-        currentPageIds.forEach(id => {
+      // Check each row on current page
+      currentPageIds.forEach(id => {
+        const artwork = filteredArtworks.find(art => art.id === id);
+        if (currentSelection.has(id)) {
+          // Row is selected in e.value, add it to map
+          if (artwork) {
+            newSelectedRows.set(id, artwork);
+          }
+        } else {
+          // Row is not selected in e.value, remove it from map
           newSelectedRows.delete(id);
-        });
-      }
+        }
+      });
     }
     
-    setSelectedRows(newSelectedRows);
-  };
-
-  const onRowSelect = (e: any) => {
-    const newSelectedRows = new Map(selectedRows);
-    newSelectedRows.set(e.data.id, e.data);
-    setSelectedRows(newSelectedRows);
-  };
-
-  const onRowUnselect = (e: any) => {
-    const newSelectedRows = new Map(selectedRows);
-    newSelectedRows.delete(e.data.id);
     setSelectedRows(newSelectedRows);
   };
 
@@ -89,12 +103,38 @@ const Index = () => {
   };
 
   // Get currently visible selected rows for the DataTable
-  const currentPageSelectedRows = artworks.filter(art => 
+  const currentPageSelectedRows = filteredArtworks.filter(art => 
     selectedRows.has(art.id)
   );
 
   return (
     <div className="min-h-screen bg-background p-8">
+      <style>{`
+        .p-datatable .p-datatable-tbody > tr.p-highlight {
+          background-color: #86efac !important;
+          color: #166534 !important;
+        }
+        
+        .p-datatable .p-datatable-tbody > tr.p-highlight:hover {
+          background-color: #4ade80 !important;
+        }
+        
+        .p-checkbox .p-checkbox-box.p-highlight {
+          border-color: #22c55e !important;
+          background: #22c55e !important;
+        }
+        
+        .p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
+          border-color: #16a34a !important;
+          background: #16a34a !important;
+        }
+        
+        .p-checkbox .p-checkbox-box.p-focus {
+          border-color: #22c55e !important;
+          box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25) !important;
+        }
+      `}</style>
+      
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
@@ -105,6 +145,19 @@ const Index = () => {
           </p>
         </header>
 
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search by title, artist, origin, or inscriptions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 text-base"
+            />
+          </div>
+        </div>
+
         <SelectionPanel
           selectedRows={selectedRows}
           onRemoveSelection={handleRemoveSelection}
@@ -113,7 +166,7 @@ const Index = () => {
 
         <div className="bg-card rounded-lg shadow-lg overflow-hidden border border-border">
           <DataTable
-            value={artworks}
+            value={filteredArtworks}
             loading={loading}
             paginator
             rows={12}
@@ -123,8 +176,6 @@ const Index = () => {
             first={(currentPage - 1) * 12}
             selection={currentPageSelectedRows as any}
             onSelectionChange={onSelectionChange}
-            onRowSelect={onRowSelect}
-            onRowUnselect={onRowUnselect}
             dataKey="id"
             className="artwork-table"
             emptyMessage="No artworks found"
