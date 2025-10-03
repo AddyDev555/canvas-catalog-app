@@ -1,42 +1,66 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.artwork-table .p-datatable-header {
+  background: hsl(var(--card));
+  border-bottom: 2px solid hsl(var(--border));
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.artwork-table .p-datatable-thead > tr > th {
+  background: hsl(var(--table-header));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  padding: 1rem;
+  border: none;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.artwork-table .p-datatable-tbody > tr {
+  transition: all 0.2s ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.artwork-table .p-datatable-tbody > tr:hover {
+  background: hsl(var(--table-row-hover)) !important;
 }
 
-.card {
-  padding: 2em;
+.artwork-table .p-datatable-tbody > tr > td {
+  padding: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 
-.read-the-docs {
-  color: #888;
+.artwork-table .p-paginator {
+  background: hsl(var(--card));
+  border-top: 2px solid hsl(var(--border));
+  padding: 1rem;
+}
+
+.artwork-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+.artwork-table .p-paginator .p-paginator-pages .p-paginator-page {
+  color: hsl(var(--foreground));
+  transition: all 0.2s ease;
+}
+
+.artwork-table .p-paginator .p-paginator-pages .p-paginator-page:hover {
+  background: hsl(var(--accent));
+}
+
+.artwork-table .p-checkbox .p-checkbox-box {
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--background));
+  transition: all 0.2s ease;
+}
+
+.artwork-table .p-checkbox .p-checkbox-box.p-highlight {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+}
+
+.artwork-table .p-checkbox .p-checkbox-box:hover {
+  border-color: hsl(var(--primary));
+}
+
+.artwork-table .p-datatable-loading-icon {
+  color: hsl(var(--primary));
 }
